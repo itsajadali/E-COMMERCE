@@ -2,21 +2,21 @@ const slugify = require("slugify");
 const asyncHandler = require("express-async-handler");
 const Product = require("../models/productModel");
 const AppError = require("../utils/appError");
+const APIfeatures = require("../utils/apifeatures");
 
 exports.getProducts = asyncHandler(async (req, res) => {
-  const page = req.query.page * 1 || 1;
-  const limit = req.query.limit * 1 || 5;
-  const skip = (page - 1) * limit;
+  const features = new APIfeatures(Product.find(), req.query)
+    .filter()
+    .limitsField()
+    .search()
+    .sort()
+    .paginate();
 
-  const products = await Product.find().skip(skip).limit(limit).populate({
-    path: "category",
-    select: "name -_id",
-  });
+  const products = await features.query;
 
   res.status(200).json({
     statues: "Success",
     results: products.length,
-    page,
     data: products,
   });
 });
