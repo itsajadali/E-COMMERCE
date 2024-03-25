@@ -11,7 +11,12 @@ const router = express.Router();
 router
   .route("/")
   .get(brandService.getBrands)
-  .post(validation.createCategoryVal, brandService.createBrand);
+  .post(
+    brandService.uploadBrandImage,
+    brandService.resizeImages,
+    validation.createCategoryVal,
+    brandService.createBrand
+  );
 
 router
   .route("/:id")

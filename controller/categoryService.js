@@ -1,69 +1,33 @@
-const slugify = require("slugify");
+/* eslint-disable import/no-extraneous-dependencies */
+// eslint-disable-next-line import/no-extraneous-dependencies
+const sharp = require("sharp");
 const asyncHandler = require("express-async-handler");
+const { uuid } = require("uuidv4");
+
+const factory = require("./handlerFactory");
 const Category = require("../models/categoryModel");
-const AppError = require("../utils/appError");
 
-exports.getCategories = asyncHandler(async (req, res) => {
-  const page = req.query.page * 1 || 1;
-  const limit = req.query.limit * 1 || 5;
-  const skip = (page - 1) * limit;
+const uploadImages = require("../middlewares/uploadImageMiddleware");
 
-  const categories = await Category.find().skip(skip).limit(limit);
+exports.uploadCategoryImage = uploadImages.uploadOneImage("image");
 
-  res.status(200).json({
-    statues: "Success",
-    results: categories.length,
-    page,
-    data: categories,
-  });
+exports.resizeImages = asyncHandler(async (req, res, next) => {
+  // console.log(req.file);
+  const filename = `category-${uuid()}-${Date.now()}.jpeg`;
+
+  await sharp(req.file.buffer)
+    .resize(500, 500)
+    .toFormat("jpeg")
+    .jpeg({ quality: 90 })
+    .toFile(`uploads/categories/${filename}`);
+
+  req.body.image = filename;
+  next();
 });
 
-exports.getCategory = asyncHandler(async (req, res, next) => {
-  const { id } = req.params;
-  const category = await Category.findById(id);
+exports.getCategories = factory.getAll(Category);
 
-  if (!category) {
-    return next(new AppError(`No category for this id ${id}`, 404));
-  }
-  res.status(200).json({ data: category });
-});
-
-exports.createCategory = asyncHandler(async (req, res, next) => {
-  const { name } = req.body;
-  const category = await Category.create({ name, slug: slugify(name) });
-
-  res.status(201).json({
-    statues: "Success",
-    data: category,
-  });
-});
-
-exports.updateCategory = asyncHandler(async (req, res, next) => {
-  const { id } = req.params;
-  const { name } = req.body;
-
-  const category = await Category.findByIdAndUpdate(
-    { _id: id },
-    { name, slug: slugify(name) },
-    { new: true }
-  );
-
-  if (!category) {
-    return next(new AppError(`No category for this id ${id}`, 404));
-  }
-  res.status(200).json({
-    statues: "Success",
-    data: category,
-  });
-});
-
-exports.deleteCategory = asyncHandler(async (req, res, next) => {
-  const { id } = req.params;
-  const category = await Category.findByIdAndDelete(id);
-
-  if (!category) {
-    return next(new AppError(`No category for this id ${id}`, 404));
-  }
-
-  res.status(204).json({ status: "success", data: null });
-});
+exports.getCategory = factory.getOne(Category);
+exports.createCategory = factory.createOne(Category);
+exports.updateCategory = factory.updateOne(Category);
+exports.deleteCategory = factory.deleteOne(Category);

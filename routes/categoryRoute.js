@@ -8,15 +8,26 @@ const subCategoryRouter = require("./subCategoryRoutes");
 const router = express.Router();
 
 router.use("/:categoryId/subcategory", subCategoryRouter);
+
 router
   .route("/")
   .get(categoryService.getCategories)
-  .post(validation.createCategoryVal, categoryService.createCategory);
+  .post(
+    categoryService.uploadCategoryImage,
+    categoryService.resizeImages,
+    validation.createCategoryVal,
+    categoryService.createCategory
+  );
 
 router
   .route("/:id")
   .get(validation.idValidation, categoryService.getCategory)
-  .patch(validation.idValidation, categoryService.updateCategory)
+  .patch(
+    categoryService.uploadCategoryImage,
+    categoryService.resizeImages,
+    validation.idValidation,
+    categoryService.updateCategory
+  )
   .delete(validation.idValidation, categoryService.deleteCategory);
 
 module.exports = router;
