@@ -21,7 +21,12 @@ router
 router
   .route("/:id")
   .get(validation.idValidation, brandService.getBrand)
-  .patch(validation.idValidation, brandService.updateBrand)
+  .patch(
+    brandService.uploadBrandImage,
+    brandService.resizeImages,
+    validation.idValidation,
+    brandService.updateBrand
+  )
   .delete(validation.idValidation, brandService.deleteBrand);
 
 module.exports = router;
