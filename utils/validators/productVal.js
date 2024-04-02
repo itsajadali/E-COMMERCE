@@ -17,7 +17,7 @@ const isSubcategoryValid = async (value, { req }) => {
 
 const isSubcategoryExist = async (value) => {
   const subCategory = await SubCategory.find({
-    _id: { $exists: true, $in: value }, // $in: value means that the value is an array of ids that we want to check 
+    _id: { $exists: true, $in: value }, // $in: value means that the value is an array of ids that we want to check
   });
   if (subCategory.length !== value.length || subCategory.length < 1) {
     throw new Error("invalid subCategory");

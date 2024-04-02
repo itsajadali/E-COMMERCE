@@ -19,6 +19,19 @@ const categorySchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+const modifyingImag = (doc) => {
+  if (!doc.image) return;
+
+  doc.image = `${process.env.BASE_URL}/categories/${doc.image}`;
+  return doc;
+};
+
+// works on get request (it sends the document modifying the image)
+categorySchema.post("init", modifyingImag);
+
+// works on create request (it sends the document modifying the image)
+categorySchema.post("save", modifyingImag);
+
 // 2- Create model
 const CategoryModel = mongoose.model("Category", categorySchema);
 

@@ -19,6 +19,16 @@ const brandSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+const modifyingImag = (doc) => {
+  if (!doc.image) return;
+
+  doc.image = `${process.env.BASE_URL}/categories/${doc.image}`;
+  return doc;
+};
+
+brandSchema.post("init", modifyingImag);
+brandSchema.post("save", modifyingImag);
+
 // 2- Create model
 const BrandModel = mongoose.model("Brand", brandSchema);
 

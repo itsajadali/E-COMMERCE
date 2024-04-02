@@ -1,4 +1,4 @@
-const { check } = require("express-validator");
+const { check, body } = require("express-validator");
 const validationMiddleware = require("../../middlewares/validatorMiddleware");
 
 exports.idValidation = [
@@ -6,7 +6,7 @@ exports.idValidation = [
   validationMiddleware,
 ];
 
-exports.createCategoryVal = [
+exports.createBrandVal = [
   check("name")
     .notEmpty()
     .withMessage("category required")
@@ -16,3 +16,5 @@ exports.createCategoryVal = [
     .withMessage("name must be below 32"),
   validationMiddleware,
 ];
+
+

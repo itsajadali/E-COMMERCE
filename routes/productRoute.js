@@ -7,12 +7,21 @@ const router = express.Router();
 router
   .route("/")
   .get(productService.getProducts)
-  .post(validation.createCategoryVal, productService.createProduct);
+  .post(
+    productService.uploadProductImage,
+    productService.resizeImages,
+    validation.createCategoryVal,
+    productService.createProduct
+  );
 
 router
   .route("/:id")
   .get(productService.getProduct)
-  .patch(productService.updateProduct)
+  .patch(
+    productService.uploadProductImage,
+    productService.resizeImages,
+    productService.updateProduct
+  )
   .delete(productService.deleteProduct);
 
 module.exports = router;

@@ -14,7 +14,7 @@ router
   .post(
     brandService.uploadBrandImage,
     brandService.resizeImages,
-    validation.createCategoryVal,
+    validation.createBrandVal,
     brandService.createBrand
   );
 

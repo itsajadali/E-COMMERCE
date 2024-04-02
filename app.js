@@ -9,6 +9,7 @@ const productRouter = require("./routes/productRoute");
 
 const globalErrorHandler = require("./controller/errorHandler");
 const AppError = require("./utils/appError");
+const userRouter = require("./routes/userRoute");
 
 const app = express();
 
@@ -25,6 +26,7 @@ app.use("/api/v1/category", categoryRouter);
 app.use("/api/v1/subcategory", subcategoryRouter);
 app.use("/api/v1/brand", brandRouter);
 app.use("/api/v1/product", productRouter);
+app.use("/api/v1/users", userRouter);
 
 app.all("*", (req, res, next) => {
   next(new AppError(`can't get this route: ${req.originalUrl}`, 400));
