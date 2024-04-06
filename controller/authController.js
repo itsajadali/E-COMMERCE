@@ -1,6 +1,6 @@
 /* eslint-disable import/no-extraneous-dependencies */
+const crypto = require("crypto");
 const asyncHandler = require("express-async-handler");
-const { promisify } = require("util");
 
 const jwt = require("jsonwebtoken");
 
@@ -71,7 +71,7 @@ exports.protects = asyncHandler(async (req, res, next) => {
   if (!token) return next(new AppError("you are not logged in", 401));
 
   // 3) verify the token
-  const decoded = await promisify(jwt.verify)(token, process.env.JWT_SECRET);
+  const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
   // 4) check if user still exists
   const user = await User.findById(decoded.id);
@@ -79,19 +79,61 @@ exports.protects = asyncHandler(async (req, res, next) => {
   if (!user) return next(new AppError("user no longer exists", 401));
 
   // 5) check if user changed password after the token was issued
-  // if (user.changedPasswordAfter(decoded.iat))
-  //   return next(new AppError("user recently changed password", 401));
+  if (user.changedPasswordAfter(decoded.iat))
+    return next(new AppError("user recently changed password", 401));
 
   req.user = user;
 
   next();
 });
 
+exports.restrictTo =
+  (...roles) =>
+  (req, res, next) => {
+    if (!roles.includes(req.user.role))
+      return next(
+        new AppError("you don't have permission to perform this action", 403)
+      );
+    next();
+  };
+
+exports.forgotPassword = asyncHandler(async (req, res, next) => {
+  const user = await User.findOne({ email: req.body.email });
+
+  if (!user) return next(new AppError("user not found", 404));
+
+  const resetToken = user.createPasswordRestToken();
+  await user.save({ validateBeforeSave: false });
+
+  next();
+});
+
+exports.verifyResetToken = asyncHandler(async (req, res, next) => {
+  const hashedToken = crypto
+    .createHash("sha256")
+    .update(req.params.token)
+    .digest("hex");
+
+  const user = await User.findOne({
+    passwordResetToken: hashedToken,
+    passwordResetExpires: { $gt: Date.now() },
+  });
+
+  if (!user) return next(new AppError("token is invalid or expired", 400));
+
+  res.status(200).json({
+    status: "success",
+    data: {
+      user,
+    },
+  });
+});
+
 exports.updatePassword = asyncHandler(async (req, res, next) => {
   // 1) get user from collection
   const user = await User.findById(req.user._id).select("+password");
 
-  if (!(await user.comparePassword(req.body.newPassword, user.password)))
+  if (!(await user.comparePassword(req.body.currentPassword, user.password)))
     return next(new AppError("your current password is wrong", 401));
 
   user.password = req.body.newPassword;
