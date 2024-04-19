@@ -40,6 +40,7 @@ const userSchema = mongoose.Schema(
     passwordChangedAt: Date,
     passwordResetToken: String,
     passwordResetExpires: Date,
+    passwordResetVerified: Boolean,
   },
   { timestamps: true }
 );
@@ -82,6 +83,7 @@ userSchema.methods.createPasswordRestToken = function () {
     .digest("hex");
 
   this.passwordResetExpires = Date.now() + 5 * 60 * 1000; // 5 minutes
+  this.passwordResetVerified = false;
 
   return restToken; // we gonna sent it via email
 };

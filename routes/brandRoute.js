@@ -9,6 +9,7 @@ const authController = require("../controller/authController");
 const router = express.Router();
 
 // router.use("/:categoryId/subcategory", subCategoryRouter);
+
 router
   .route("/")
   .get(brandService.getBrands)

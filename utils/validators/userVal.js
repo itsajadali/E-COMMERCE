@@ -70,3 +70,36 @@ exports.updatePasswordVal = [
     }),
   validationMiddleware,
 ];
+
+exports.forgotPasswordVal = [
+  check("email")
+    .notEmpty()
+    .withMessage("email required")
+    .isEmail()
+    .withMessage("invalid email"),
+  validationMiddleware,
+];
+
+exports.verifyResetCodeVal = [
+  check("resetCode").notEmpty().withMessage("rest code required"),
+  validationMiddleware,
+];
+
+exports.resetPasswordVal = [
+  check("email")
+    .notEmpty()
+    .withMessage("email required")
+    .isEmail()
+    .withMessage("invalid email"),
+  check("password").notEmpty().withMessage("password required"),
+  check("confirmPassword")
+    .notEmpty()
+    .withMessage("confirm password required")
+    .custom((value, { req }) => {
+      if (value !== req.body.password) {
+        throw new Error("password don't match");
+      }
+      return true;
+    }),
+  validationMiddleware,
+];

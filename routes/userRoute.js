@@ -35,6 +35,12 @@ router
     authController.updatePassword
   );
 
-router.route("/forgotPassword").post(authController.forgotPassword);
+router
+  .route("/forgotPassword")
+  .post(validation.forgotPasswordVal, authController.forgotPassword);
 
+router
+  .route("/verifyResetCode")
+  .post(validation.verifyResetCodeVal, authController.verifyResetCode);
+router.route("/resetPassword").patch(validation.resetPasswordVal, authController.resetPassword);
 module.exports = router;

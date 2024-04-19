@@ -3,7 +3,7 @@ const crypto = require("crypto");
 const asyncHandler = require("express-async-handler");
 
 const jwt = require("jsonwebtoken");
-
+const sendEmail = require("../utils/sendEmail");
 const AppError = require("../utils/appError");
 const User = require("../models/userModel");
 
@@ -105,13 +105,50 @@ exports.forgotPassword = asyncHandler(async (req, res, next) => {
   const resetToken = user.createPasswordRestToken();
   await user.save({ validateBeforeSave: false });
 
-  next();
+  const message = `
+  
+  Dear ${user.name} 
+
+  We received a request to reset your password for your account at E-COMMERCE. If you did not make this request, please ignore this email.
+  
+  To reset your password, please paste the following code into your browser 
+  
+  ${resetToken} If you did not make this request, please ignore this email.
+
+  This code will expire in 10 minutes for security purposes.
+
+  If you encounter any issues or did not request a password reset, please contact our support team at ${process.env.SUPPORT_EMAIL}.
+
+  Thank you for using our app.
+
+  Best regards,
+  Customer Support
+
+  `;
+
+  try {
+    await sendEmail({
+      email: user.email,
+      subject: "Password Reset Request",
+      message,
+    });
+  } catch (error) {
+    user.passwordResetToken = undefined;
+    user.passwordResetExpires = undefined;
+    await user.save({ validateBeforeSave: false });
+    return next(new AppError("there was an error sending the email", 500));
+  }
+
+  res.status(200).json({
+    status: "success",
+    message: "email sent",
+  });
 });
 
-exports.verifyResetToken = asyncHandler(async (req, res, next) => {
+exports.verifyResetCode = asyncHandler(async (req, res, next) => {
   const hashedToken = crypto
     .createHash("sha256")
-    .update(req.params.token)
+    .update(req.body.resetCode)
     .digest("hex");
 
   const user = await User.findOne({
@@ -120,6 +157,34 @@ exports.verifyResetToken = asyncHandler(async (req, res, next) => {
   });
 
   if (!user) return next(new AppError("token is invalid or expired", 400));
+
+  user.passwordResetToken = undefined;
+  user.passwordResetExpires = undefined;
+  user.passwordResetVerified = true;
+
+  await user.save();
+
+  res.status(200).json({
+    status: "success",
+    data: {
+      user,
+    },
+  });
+});
+
+exports.resetPassword = asyncHandler(async (req, res, next) => {
+  const { email } = req.body;
+
+  const user = await User.findOne({ email });
+
+  if (!user) return next(new AppError("user not found", 404));
+
+  if (!user.passwordResetVerified)
+    return next(new AppError("password reset not verified", 400));
+
+  user.password = req.body.password;
+  user.passwordResetVerified = undefined;
+  await user.save();
 
   res.status(200).json({
     status: "success",
